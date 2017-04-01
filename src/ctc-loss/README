@@ -1,1 +1,20 @@
 1. run "make" to get 'ctc_fast_noblank_mask_semi_stay.so'
+2. Example usage:
+
+import ctc_fast_noblank_mask_semi_stay
+cost, deltas, skip = ctc_fast_noblank_mask_semi_stay.ctc_loss(
+            sm_out_b.astype(np.float64,order='F'),
+            mb_labels.astype(np.int32,order='F'),
+            semi_labels.astype(np.int32,order='F'),
+            stay_prob_F.astype(np.float64,order='F'),
+            stay_prob_B.astype(np.float64,order='F'),
+            blank=0)
+softmax_tar = sm_out_b - deltas # softmax target
+
+
+sm_out_b: n by m matrix of softmax action probability (n actions, m frames)
+mb_labels: 1D array of action order
+semi_labels: length m 1D array containing semi-supervised action label for each frame. -1 means the frame doesn't have label
+stay_prob_F, stay_prob_B: both length m 1D array.
+stay_prob_F[t] = normalized max(\theta, s_{t-1}^t) in eq. (7)
+
