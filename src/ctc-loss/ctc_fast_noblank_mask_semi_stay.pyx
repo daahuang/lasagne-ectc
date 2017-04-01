@@ -13,18 +13,21 @@ ctypedef np.float64_t f_t
 def ctc_loss(double[::1,:] params not None, 
         int[::1] seq not None, 
         int[::1] semi_labels not None, ### semi_supervised label
-        int[::1] mask_S not None, int[::1] mask_E not None, ### MASK
+        #int[::1] mask_S not None, int[::1] mask_E not None, ### MASK
         double[::1] stay_prob_F not None, double[::1] stay_prob_B not None, # forward and backward stay prob
         unsigned int blank=0):
     """
-    CTC loss function.
-    params - n x m matrix of n-D probability distributions over m frames. Must
-    be in Fortran order in memory.
-    seq - sequence of phone id's for given example.
+    ECTC loss function.Must
+    All inputs must be in Fortrain order in memory (e.g., params.astype(np.float64, order='F') )
+
+    params: n x m matrix of softmax output, n is number of actions, m is number of frames.
+    seq: sequence of action order for given example.
+    semi_labels: length m 1D array containing semi-supervised action label for each frame. -1 means no label.
+    stay_prob_F, stay_prob_B: both are length m 1D array. stay_prob_F[t] = max(\theta, s_{t-1}^{t}) in eq (7) of the paper.
     Returns objective and gradient.
     """
 
-    cdef unsigned int seqLen = seq.shape[0] # Length of label sequence (# phones)
+    cdef unsigned int seqLen = seq.shape[0] # Length of label sequence (# actions)
     cdef unsigned int numphones = params.shape[0] # Number of labels
     cdef unsigned int L = 2*seqLen + 1 # Length of label sequence with blanks
     cdef unsigned int T = params.shape[1] # Length of utterance (time)
@@ -79,6 +82,7 @@ def ctc_loss(double[::1,:] params not None,
                 ##### SEMI #####
                 
                 ##### MASK #####
+                """
                 if s%2 == 0:
                     # blank
                     if l not in range(mask_S[t], mask_E[t]):
@@ -89,6 +93,7 @@ def ctc_loss(double[::1,:] params not None,
                     # not blank
                     if l not in range(mask_S[t], mask_E[t]):
                         continue 
+                """
                 ##### MASK #####   
                         
                 ##### PARAMS_STAY & PARAMS_MOVE #####
@@ -186,6 +191,7 @@ def ctc_loss(double[::1,:] params not None,
                 ##### SEMI #####
                         
                 ##### MASK #####
+                """
                 if s%2 == 0:
                     # blank
                     if l not in range(mask_S[t], mask_E[t]):
@@ -196,6 +202,7 @@ def ctc_loss(double[::1,:] params not None,
                     # not blank
                     if l not in range(mask_S[t], mask_E[t]):
                         continue 
+                """
                 ##### MASK #####                   
                 
                 # TODO use stay_prob_B
